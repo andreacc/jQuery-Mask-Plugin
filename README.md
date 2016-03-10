@@ -1,14 +1,14 @@
 #Fork added features:
 * maxlength attributte on mask: example $([selector]).mask("000",{placeholder: "___", maxlength: 10}). It overrides maxlength on html tag.
 * autoTab: If maxlength attribute specified, when reach maxlength, focus automatically jumps to next input. To enable, in $.jMaskGlobals, set "autoTab: true".
-* Placeholder added features: the placeholder act as a mask and disappear as you type. Id does not mess with validation as it is inside a <span> above the input. Thanks diy for inspiration and code to make this work: https://github.com/diy/jquery-placeholder . To enable, in $.jMaskGlobals, set "forcePlaceholder: true" to override native placeholder.
+* Placeholder added features: the placeholder act as a mask and disappear as you type. It does not mess with validation as it is inside a < span > above the real input. Thanks diy for inspiration and code to make this work: https://github.com/diy/jquery-placeholder . To enable, in $.jMaskGlobals, set "forcePlaceholder: true" to override native placeholder.
 * Aliases: for example, in $.jMaskGlobals, add after translation: {...}:
       ,aliases: {
           "numeric": {mask: "0#"},
           "date": {mask: "00/00/0000", options: {placeholder: "dd/mm/yyyy", maxlength: 10}}
         }
-    Now you can use $([selector]).mask("numeric") or <input data-mask="numeric" ...> for numeric mask, etc.
-* Refresh method: call $.jMaskRefresh([$your-input[selector]) to reapply mask that was changed by another plugin.
+    Now you can use $([selector]).mask("numeric") or < input data-mask="numeric" ... > for numeric mask, etc.
+* Refresh method: call $.jMaskRefresh($([selector]) to reapply mask that was changed by another plugin.
 
 Working of placeholder and autoTab:
 ![alt text](https://github.com/andreacc/jQuery-Mask-Plugin/blob/master/example.gif "example")
