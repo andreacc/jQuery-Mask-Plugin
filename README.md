@@ -11,7 +11,7 @@
 * Refresh method: call $.jMaskRefresh([$your-input[selector]) to reapply mask that was changed by another plugin.
 
 Working of placeholder and autoTab:
-(https://github.com/andreacc/jQuery-Mask-Plugin/blob/master/example.gif)
+![alt text](https://github.com/andreacc/jQuery-Mask-Plugin/blob/master/example.gif "example")
 
 
 
