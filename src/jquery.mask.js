@@ -1,6 +1,6 @@
 /**
  * jquery.mask.js
- * @version: v1.13.4
+ * @version: v1.13.8
  * @author: Igor Escobar
  *
  * Created by Igor Escobar on 2012-03-10. Please report any bug at http://blog.igorescobar.com
@@ -60,13 +60,6 @@
 	];
 
     var Mask = function (el, mask, options) {
-        el = $(el);
-
-        var jMask = this, oldValue = el.val(), regexMask;
-        var count = 0;
-        var $placeholder = null;
-
-        mask = typeof mask === 'function' ? mask(el.val(), undefined, el,  options) : mask;
 
         var p = {
             invalid: [],
@@ -81,7 +74,7 @@
                     // IE Support
                     if (dSel && navigator.appVersion.indexOf('MSIE 10') === -1) {
                         sel = dSel.createRange();
-                        sel.moveStart('character', el.is('input') ? -el.val().length : -el.text().length);
+                        sel.moveStart('character', -p.val().length);
                         pos = sel.text.length;
                     }
                     // Firefox support
@@ -97,24 +90,23 @@
                     if (el.is(':focus')) {
                         var range, ctrl = el.get(0);
 
-                        if (ctrl.setSelectionRange) {
-                            ctrl.setSelectionRange(pos,pos);
-                        } else if (ctrl.createTextRange) {
-                            range = ctrl.createTextRange();
-                            range.collapse(true);
-                            range.moveEnd('character', pos);
-                            range.moveStart('character', pos);
-                            range.select();
-                        }
+                        range = ctrl.createTextRange();
+                        range.collapse(true);
+                        range.moveEnd('character', pos);
+                        range.moveStart('character', pos);
+                        range.select();
                     }
                 } catch (e) {}
             },
             events: function() {
                 el
-                .on('input.mask keyup.mask', function(e) {
+                .on('keydown.mask', function(e) {
+                    el.data('mask-keycode', e.keyCode || e.which);
+                })
+                .on($.jMaskGlobals.useInput ? 'input.mask' : 'keyup.mask', function(e) {
                         e = e || window.event;
                         p.invalid = [];
-                        var keyCode = e.keyCode || e.which;
+                        var keyCode = el.data('mask-keycode');
                         if ($.inArray(keyCode, jMask.byPassKeys) === -1) {
                         	p.behaviour(e, keyCode);
                         	return p.callbacks(e);
@@ -129,36 +121,29 @@
                     el.data('changed', true);
                 })
                 .on('blur.mask', function(){
-                    if (oldValue !== el.val() && !el.data('changed')) {
-                        el.triggerHandler('change');
+                    if (oldValue !== p.val() && !el.data('changed')) {
+                        el.trigger('change');
                     }
                     el.data('changed', false);
-                    /*$placeholder.toggle(!$.trim(el.val()).length);*/
+                    /*$placeholder.toggle(!$.trim(p.val()).length);*/
                 })
                 // it's very important that this callback remains in this position
                 // otherwhise oldValue it's going to work buggy
                 .on('blur.mask', function() {
-                    oldValue = el.val();
+                    oldValue = p.val();
                 })
                 // select all text on focus
                 .on('focus.mask', function (e) {
                     if (options.selectOnFocus === true) {
                         $(e.target).select();
                     }
-                    /*if ($placeholder)
-                    	$placeholder.hide();*/
                 })
                 // clear the value if it not complete the mask
                 .on('focusout.mask', function() {
                     if (options.clearIfNotMatch && !regexMask.test(p.val())) {
                        p.val('');
                    }
-                })
-                .onpropertychange = function() {
-					/*if (event.propertyName === 'value') {
-						$placeholder.toggle(!$.trim(el.val()).length);
-					}*/
-				};
+                });
                 if ($placeholder) {
 	                $placeholder
 	                .on('mousedown', function() {
@@ -241,15 +226,14 @@
                    var caretPos = p.getCaret(),
                         currVal = p.val(),
                         currValL = currVal.length,
-                        changeCaret = caretPos < currValL,
                         newVal = p.getMasked(),
                         newValL = newVal.length,
-                        maskDif = p.getMCharsBeforeCount(newValL - 1) - p.getMCharsBeforeCount(currValL - 1);
+                        maskDif = p.getMCharsBeforeCount(newValL - 1) - p.getMCharsBeforeCount(currValL - 1),
+                        changeCaret = caretPos < currValL;
 
                     p.val(newVal);
 
-                    // change caret but avoid CTRL+A
-                    if (e && changeCaret && !(keyCode === 65 && e.ctrlKey)) {
+                    if (changeCaret) {
                         // Avoid adjusting caret on backspace or delete
                         if (!(keyCode === 8 || keyCode === 46)) {
                             caretPos = p.caretPos(caretPos, currValL, newValL, maskDif);
@@ -257,47 +241,46 @@
                         p.setCaret(caretPos);
                     }
 
-                    //Redo placeholder to mimic input value where there is one
-                    if (options.placeholder)
-                    	p.setPlaceholder(el.val() + options.placeholder.substr(el.val().length));
+                    //Redo placeholder
+                    p.setPlaceholder();
 
-                    // if newval reaches maxlength, autoTab
-                    setTimeout(function () {
-                    	if (jMask.autoTab && options.maxlength)
-                    		if ((newVal.length >= options.maxlength) &&
-                    			((p.getCaret()) >= options.maxlength) && // only if caret at end
-                    			(keyCode !== 35 && keyCode !== 39 && keyCode !== 40)) //not if got at end with END, RIGHT or DOWN keys
-                    				p.autoTab();
-                    }, 25);
+                    // if there is maxlength and autoTab enabled
+                    if (jMask.autoTab && options.maxlength &&
+                    		(newVal.length >= options.maxlength) && // if newval reaches maxlength, autoTab
+	                    	(caretPos >= options.maxlength) && // only if caret at end
+	                    	(keyCode !== 35 && keyCode !== 39 && keyCode !== 40)) { //not if got at end with END, RIGHT or DOWN keys
+                    	setTimeout(function () {
+		                	p.autoTab();
+		                }, 50);
+                    }
             },
             autoTab: function() {
                 var newI = el;
                 var hasAttr = function(attr) {
-                	return (attr !== undefined && attr !== "undefined" && attr !== false && attr !== "false");
+                	return (typeof attr != "undefined" && attr != false);
                 }
 
                 do {
                 	newI = p.next(newI); //get next input
-                	if (newI === null || newI === undefined)
+                	if (newI == null || typeof newI == "undefined")
                 		break;
                 } while ((hasAttr(newI.attr("disabled"))) // If disabled...
                 		|| (hasAttr(newI.attr("readonly"))) // ...or readonly...
                         || ! newI.is(":visible")) //... or not visible... then go next
 
 
-	            if (newI && newI !== null && newI.length > 0)
-	                if (newI.is('input, select'))
-	                    newI.focus().select();
+	            if (newI && newI.length && newI.is('input, select'))
+	                newI.focus().select();
             },
             next: function(current) {
             	var nextI = current.next(); // get next element on the same DOM node
             	var parent = current.parent();
 
-            	if (nextI && nextI !== null && nextI.length > 0) { // if there is next element...
+            	if (nextI && nextI.length) { // if there is next element...
         	        if (nextI.is('input') || nextI.is('select')) // ...and it is input or select, return it
         	        	return nextI;
         	    	var inputs = nextI.find('input, select');
-        	        if (inputs && inputs !== null && inputs.length > 0) // ...and it has inputs, return first input
+        	        if (inputs && inputs.length) // ...and it has inputs, return first input
         	            return inputs.first();
         	        else // if there isn't inputs, try next on DOM node
         	        	return p.next(nextI);
@@ -309,8 +292,11 @@
         	    }
             },
             createPlaceholder: function() { /* Source for this method: https://github.com/diy/jquery-placeholder */
-            	if (p.getPlaceholder() != null) //placeholder already exists
-        			return;
+            	$placeholder = p.getPlaceholder();
+            	if ($placeholder) { //placeholder already exists
+            		p.setPlaceholder();
+            		return;
+            	}
             	if (!options.placeholder && !el.prop('placeholder') && !el.prop('data-mask-placeholder')) //no placeholder defined
         			return;
             	if (NATIVE_SUPPORT && !jMask.forcePlaceholder) {
@@ -323,12 +309,12 @@
             	//remove native
             	el.prop('data-mask-placeholder', el.prop('data-mask-placeholder') ? el.prop('data-mask-placeholder') : el.prop('placeholder'));
             	el.prop('placeholder', '');
-            	//act as polyfill
+            	//set placeholder to be used (options.placeholder > el.prop('data-mask-placeholder') > el.prop('placeholder'))
             	options.placeholder = options.placeholder ? options.placeholder : el.prop('data-mask-placeholder');
 
         		// create the placeholder
         		$placeholder = $('<span>').addClass('placeholder');
-        		p.setPlaceholder(options.placeholder);
+        		p.setPlaceholder();
 
             	// enumerate textbox styles for mimicking
         		var styles = {};
@@ -358,22 +344,22 @@
         		if (isNaN(marginTop)) marginTop = 0;
         		$placeholder.css('margin-top', marginTop + dy);
             },
-            setPlaceholder: function(text) {
-            	if ($placeholder)
-            		$placeholder.html(text);
+            setPlaceholder: function() {
+            	$placeholder = p.getPlaceholder();
+            	if ($placeholder) { //if there is placeholder
+            		$placeholder.html(p.val() + options.placeholder.substr(p.val().length));
+            	}
             },
             getPlaceholder: function() {
-            	if ($placeholder)
-            		return $placeholder.html();
-            	else {
-            		var placeholder = el.prevAll('span.placeholder');
-            		if (placeholder.length) {
-            			$placeholder = $(placeholder[0]);
-            			return $placeholder.html();
+            	if ($placeholder) {
+            		return $placeholder;
+            	} else {
+            		var findPlaceholder = el.prevAll('span.placeholder');
+            		if (findPlaceholder.length > 0) {
+            			return $(findPlaceholder[0]);
             		}
-            		else
-            			return null;
             	}
+            	return null;
             },
             getMasked: function(skipMaskChars) {
                 var buf = [],
@@ -469,6 +455,12 @@
             }
         }; //end var p
 
+        el = $(el);
+        var jMask = this, oldValue = p.val(), regexMask;
+        var $placeholder = null;
+
+        mask = typeof mask === 'function' ? mask(p.val(), undefined, el,  options) : mask;
+
 
         // public methods
         jMask.mask = mask;
@@ -486,23 +478,25 @@
            return p.getMasked(true);
         };
 
-        // get value without mask
+        // refresh field
         jMask.refresh = function() {
-           p.behaviour();
+    		setTimeout(function(){
+    			p.behaviour();
+    		}, 1);
         };
 
        jMask.init = function(onlyMask) {
             onlyMask = onlyMask || false;
             options = options || {};
 
+            jMask.clearIfNotMatch  = $.jMaskGlobals.clearIfNotMatch;
             jMask.byPassKeys = $.jMaskGlobals.byPassKeys;
-            jMask.translation = $.jMaskGlobals.translation;
+            jMask.translation = $.extend({}, $.jMaskGlobals.translation, options.translation);
             jMask.aliases = $.jMaskGlobals.aliases;
-            jMask.autoTab = $.jMaskGlobals.autoTab;
-            jMask.forcePlaceholder = $.jMaskGlobals.forcePlaceholder;
-
-            jMask.translation = $.extend({}, jMask.translation, options.translation);
             //jMask.aliases = $.extend({}, jMask.aliases, options.aliases);
+            jMask.autoTab = $.extend({}, $.jMaskGlobals.autoTab, options.autoTab);
+            jMask.forcePlaceholder = $.extend({}, $.jMaskGlobals.forcePlaceholder, options.forcePlaceholder);
+
             jMask = $.extend(true, {}, jMask, options);
 
             regexMask = p.getRegexMask();
@@ -520,7 +514,7 @@
             	// this is necessary, otherwise if the user submit the form
                 // and then press the "back" button, the autocomplete will erase
                 // the data. Works fine on IE9+, FF, Opera, Safari.
-                if ($('input').length && 'oninput' in $('input')[0] === false && el.attr('autocomplete') === 'on') {
+                if (el.data('mask')) {
                   el.attr('autocomplete', 'off');
                 }
 
@@ -587,6 +581,19 @@
                 }
                 return typeof maskObject !== 'object' || stringify(maskObject.options) !== stringify(options) || maskObject.mask !== mask;
             } catch (e) {}
+        },
+        eventSupported = function(eventName) {
+            var el = document.createElement('div');
+            eventName = 'on' + eventName;
+
+            var isSupported = (eventName in el);
+            if ( !isSupported ) {
+                el.setAttribute(eventName, 'return;');
+                isSupported = typeof el[eventName] === 'function';
+            }
+            el = null;
+
+            return isSupported;
         };
 
 
@@ -639,9 +646,18 @@
     };
 
     $.jMaskRefresh = function(field) {
-    	setTimeout(function(){
-    		field.data('mask').refresh();
-    	}, 25);
+    	if (!(field && field.length > 0)) { //refresh all
+    		$("input").filter(function() {
+    			if ($(this).data('mask'))
+    				$(this).data('mask').refresh();
+    		})
+    	} else if ($.isArray(field) && field.length) {
+	    	$.each(field, function(i,v) {
+	    		$(v).data('mask').refresh();
+	    	});
+    	} else {
+    		$(field).data('mask').refresh();
+    	}
     };
 
     var globals = {
@@ -650,6 +666,7 @@
         dataMask: true,
         watchInterval: 300,
         watchInputs: true,
+        useInput: eventSupported('input'),
         watchDataMask: false,
         autoTab: true,
         forcePlaceholder: true,
@@ -658,8 +675,8 @@
             '0': {pattern: /\d/},
             '9': {pattern: /\d/, optional: true},
             '#': {pattern: /\d/, recursive: true},
-            'A': {pattern: /[a-zA-Z0-9]/},
-            'S': {pattern: /[a-zA-Z]/}
+            'A': {pattern: /[a-zA-Z0-9\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]/},
+            'S': {pattern: /[a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]/}
         },
         aliases: {
         	"numeric": {mask: "0#"}
@@ -680,16 +697,18 @@
     	return {mask: mask, options: options};
     };
 
-    //$.jMaskRun = function() {
+    $.jMaskRun = function() {
     	$.jMaskGlobals = $.jMaskGlobals || {};
         globals = $.jMaskGlobals = $.extend(true, {}, globals, $.jMaskGlobals);
 
         // looking for inputs with data-mask attribute
         if (globals.dataMask) { $.applyDataMask(); }
 
-        setInterval(function(){
-            if ($.jMaskGlobals.watchDataMask) { $.applyDataMask(); }
-        }, globals.watchInterval);
-    //};
+        if($.jMaskGlobals.watchDataMask){
+	        setInterval(function(){
+	            $.applyDataMask();
+	        }, globals.watchInterval);
+        }
+    };
 
 }));
