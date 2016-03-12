@@ -6,13 +6,15 @@
 * Placeholder added features: the placeholder act as a mask and disappear as you type. It does not mess with validation as it is inside a < span > above the real input. Thanks diy for code to make this work: [https://github.com/diy/jquery-placeholder](http://) . To enable, in $.jMaskGlobals, set `forcePlaceholder: true` (default is true) to override native placeholder.
 
 * Aliases: for example, in $.jMaskGlobals, after `translation: {...}`, add:<br>
+
 ```
       ,aliases: {<br>
           "numeric": {mask: "0#"},<br>
           "date": {mask: "00/00/0000", options: {placeholder: "dd/mm/yyyy", maxlength: 10}}<br>
         }<br>
 ```
-    Now you can use `$([selector]).mask("numeric");` or `< input data-mask="numeric" ... >` for numeric mask, etc.
+
+Now you can use `$([selector]).mask("numeric");` or `< input data-mask="numeric" ... >` for numeric mask, etc.
 
 * Refresh method: call `$.jMaskRefresh($([selector]);` to reapply mask on input that was changed by another plugin (instead of a keyup/keydown event).
 
@@ -28,13 +30,12 @@ $.jMaskGlobals = {
     }
 };
 
-**$.jMaskRun();**
+<b>$.jMaskRun();</b>
 ```
-<br><br>
-
+<br>
 Working of placeholder and autoTab:
 ![alt text](https://github.com/andreacc/jQuery-Mask-Plugin/blob/master/example.gif "example")
-
+<br><br>
 
 
 #jQuery Mask Plugin
