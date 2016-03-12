@@ -675,8 +675,8 @@
             '0': {pattern: /\d/},
             '9': {pattern: /\d/, optional: true},
             '#': {pattern: /\d/, recursive: true},
-            'A': {pattern: /[a-zA-Z0-9\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]/},
-            'S': {pattern: /[a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]/}
+            'A': {pattern: /[a-zA-Z0-9]/},
+            'S': {pattern: /[a-zA-Z]/}
         },
         aliases: {
         	"numeric": {mask: "0#"}
