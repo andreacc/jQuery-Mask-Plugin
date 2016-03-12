@@ -8,10 +8,10 @@
 * Aliases: for example, in $.jMaskGlobals, after `translation: {...}`, add:<br>
 
 ```
-      ,aliases: {<br>
-          "numeric": {mask: "0#"},<br>
-          "date": {mask: "00/00/0000", options: {placeholder: "dd/mm/yyyy", maxlength: 10}}<br>
-        }<br>
+      ,aliases: {
+          "numeric": {mask: "0#"},
+          "date": {mask: "00/00/0000", options: {placeholder: "dd/mm/yyyy", maxlength: 10}}
+        }
 ```
 
 Now you can use `$([selector]).mask("numeric");` or `< input data-mask="numeric" ... >` for numeric mask, etc.
@@ -30,12 +30,12 @@ $.jMaskGlobals = {
     }
 };
 
-<b>$.jMaskRun();</b>
+$.jMaskRun();
 ```
 <br>
-Working of placeholder and autoTab:
+Working of placeholder and autoTab:<br>
 ![alt text](https://github.com/andreacc/jQuery-Mask-Plugin/blob/master/example.gif "example")
-<br><br>
+<br><br><br>
 
 
 #jQuery Mask Plugin
